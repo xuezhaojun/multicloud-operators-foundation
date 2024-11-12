@@ -71,6 +71,9 @@ fi
 
 waitForAddon "cluster-proxy" "cluster1"
 
+# The cluster-proxy-proxy-agent deployment in open-cluster-management-agent-addons namespace should be ready
+$KUBECTL wait --for=condition=Ready -n open-cluster-management-agent-addons deployment/cluster-proxy-proxy-agent --timeout=120s
+
 $KUBECTL wait --for=condition=Available -n cluster1 mca cluster-proxy --timeout=120s
 if [ $? -eq 1 ]; then
   echo "cannot wait mca cluster-proxy in cluster1 available"
