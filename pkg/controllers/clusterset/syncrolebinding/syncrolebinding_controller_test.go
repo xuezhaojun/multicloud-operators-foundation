@@ -24,7 +24,7 @@ var (
 func generateclustersetToNamespace(ms map[string]sets.String) *helpers.ClusterSetMapper {
 	clustersetToNamespace := helpers.NewClusterSetMapper()
 	for s, c := range ms {
-		clustersetToNamespace.UpdateClusterSetByObjects(s, c)
+		clustersetToNamespace.UpdateClusterSetByObjectsLegacy(s, c)
 	}
 	return clustersetToNamespace
 }

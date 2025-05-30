@@ -51,7 +51,7 @@ func GenerateObjectSubjectMap(clustersetToObjects *helpers.ClusterSetMapper, clu
 			continue
 		}
 		objects := clustersetToObjects.GetObjectsOfClusterSet(clusterset)
-		for _, object := range objects.List() {
+		for _, object := range objects.UnsortedList() {
 			objectToSubject[object] = utils.Mergesubjects(objectToSubject[object], subjects)
 		}
 	}
@@ -62,7 +62,7 @@ func GenerateObjectSubjectMap(clustersetToObjects *helpers.ClusterSetMapper, clu
 	allClustersetToObjects := clustersetToObjects.GetAllClusterSetToObjects()
 	for _, objs := range allClustersetToObjects {
 		subjects := clustersetToSubject["*"]
-		for _, obj := range objs.List() {
+		for _, obj := range objs.UnsortedList() {
 			objectToSubject[obj] = utils.Mergesubjects(objectToSubject[obj], subjects)
 		}
 	}

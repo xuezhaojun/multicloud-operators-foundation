@@ -306,9 +306,9 @@ func (r *Reconciler) syncClustersetMapper(clusterset *clusterv1beta2.ManagedClus
 }
 
 // generateClustersetCluster generate managedclusters sets which owned by one clusterset(selector)
-func (r *Reconciler) generateClustersetCluster(selector labels.Selector) (sets.String, error) {
+func (r *Reconciler) generateClustersetCluster(selector labels.Selector) (sets.Set[string], error) {
 	managedClustersList := &clusterv1.ManagedClusterList{}
-	clusters := sets.NewString()
+	clusters := sets.New[string]()
 	err := r.client.List(context.TODO(), managedClustersList, &client.ListOptions{LabelSelector: selector})
 	if err != nil {
 		klog.Errorf("failed to list managedClustersList %v", err)
@@ -324,8 +324,8 @@ func (r *Reconciler) generateClustersetCluster(selector labels.Selector) (sets.S
 // generateClustersetNamespace generate namespace which owned by one clusterset(selector).
 // The namespace include clusterclaim/clusterpool/clusterdeployment namespace.
 // For each namespace, we create an admin rolebinding and an view rolebinding in another controller.
-func (r *Reconciler) generateClustersetNamespace(selector labels.Selector) (sets.String, error) {
-	namespaces := sets.NewString()
+func (r *Reconciler) generateClustersetNamespace(selector labels.Selector) (sets.Set[string], error) {
+	namespaces := sets.New[string]()
 
 	// Add clusterclaim namespace to newClusterSetNamespaceMapper
 	clusterClaimList := &hivev1.ClusterClaimList{}

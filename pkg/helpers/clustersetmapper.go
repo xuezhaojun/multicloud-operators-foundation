@@ -9,16 +9,16 @@ import (
 type ClusterSetMapper struct {
 	mutex sync.RWMutex
 	// mapping: ClusterSet - Objects
-	clusterSetToObjects map[string]sets.String
+	clusterSetToObjects map[string]sets.Set[string]
 }
 
 func NewClusterSetMapper() *ClusterSetMapper {
 	return &ClusterSetMapper{
-		clusterSetToObjects: make(map[string]sets.String),
+		clusterSetToObjects: make(map[string]sets.Set[string]),
 	}
 }
 
-func (c *ClusterSetMapper) UpdateClusterSetByObjects(clusterSetName string, objects sets.String) {
+func (c *ClusterSetMapper) UpdateClusterSetByObjects(clusterSetName string, objects sets.Set[string]) {
 	if clusterSetName == "" {
 		return
 	}
@@ -30,6 +30,23 @@ func (c *ClusterSetMapper) UpdateClusterSetByObjects(clusterSetName string, obje
 		return
 	}
 	c.clusterSetToObjects[clusterSetName] = objects
+}
+
+// UpdateClusterSetByObjectsLegacy provides backward compatibility with sets.String
+func (c *ClusterSetMapper) UpdateClusterSetByObjectsLegacy(clusterSetName string, objects sets.String) {
+	if clusterSetName == "" {
+		return
+	}
+
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if objects.Len() == 0 {
+		delete(c.clusterSetToObjects, clusterSetName)
+		return
+	}
+	// Convert legacy sets.String to generic sets.Set[string]
+	newSet := sets.New[string](objects.UnsortedList()...)
+	c.clusterSetToObjects[clusterSetName] = newSet
 }
 
 func (c *ClusterSetMapper) DeleteClusterSet(clusterSetName string) {
@@ -87,7 +104,7 @@ func (c *ClusterSetMapper) AddObjectInClusterSet(objectName, clusterSetName stri
 	defer c.mutex.Unlock()
 
 	if _, ok := c.clusterSetToObjects[clusterSetName]; !ok {
-		object := sets.NewString(objectName)
+		object := sets.New[string](objectName)
 		c.clusterSetToObjects[clusterSetName] = object
 	} else {
 		c.clusterSetToObjects[clusterSetName].Insert(objectName)
@@ -107,7 +124,7 @@ func (c *ClusterSetMapper) UpdateObjectInClusterSet(objectName, clusterSetName s
 	defer c.mutex.Unlock()
 
 	if _, ok := c.clusterSetToObjects[clusterSetName]; !ok {
-		cluster := sets.NewString(objectName)
+		cluster := sets.New[string](objectName)
 		c.clusterSetToObjects[clusterSetName] = cluster
 	} else {
 		c.clusterSetToObjects[clusterSetName].Insert(objectName)
@@ -129,18 +146,47 @@ func (c *ClusterSetMapper) UpdateObjectInClusterSet(objectName, clusterSetName s
 	return
 }
 
-func (c *ClusterSetMapper) GetObjectsOfClusterSet(clusterSetName string) sets.String {
+func (c *ClusterSetMapper) GetObjectsOfClusterSet(clusterSetName string) sets.Set[string] {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	return c.clusterSetToObjects[clusterSetName]
 }
 
-func (c *ClusterSetMapper) GetAllClusterSetToObjects() map[string]sets.String {
+// GetObjectsOfClusterSetLegacy provides backward compatibility with sets.String
+func (c *ClusterSetMapper) GetObjectsOfClusterSetLegacy(clusterSetName string) sets.String {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	objects := c.clusterSetToObjects[clusterSetName]
+	if objects == nil {
+		return sets.NewString()
+	}
+	// Convert generic sets.Set[string] to legacy sets.String
+	return sets.NewString(objects.UnsortedList()...)
+}
+
+func (c *ClusterSetMapper) GetAllClusterSetToObjects() map[string]sets.Set[string] {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	return c.clusterSetToObjects
+}
+
+// GetAllClusterSetToObjectsLegacy provides backward compatibility with sets.String
+func (c *ClusterSetMapper) GetAllClusterSetToObjectsLegacy() map[string]sets.String {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	result := make(map[string]sets.String)
+	for clusterSet, objects := range c.clusterSetToObjects {
+		if objects != nil {
+			result[clusterSet] = sets.NewString(objects.UnsortedList()...)
+		} else {
+			result[clusterSet] = sets.NewString()
+		}
+	}
+	return result
 }
 
 // UnionObjectsInClusterSet merge the objects in current ClusterSetMapper and newClustersetToObjects when clusterset is same.

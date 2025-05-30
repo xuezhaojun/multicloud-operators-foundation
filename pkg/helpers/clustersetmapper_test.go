@@ -12,10 +12,10 @@ func TestClusterSetMapper(t *testing.T) {
 	var clusterSetMapper = NewClusterSetMapper()
 
 	// TestCase: update clusterSets
-	inputs := map[string]sets.String{
-		"clusterSet1":  {"cluster11": {}, "cluster12": {}, "cluster13": {}},
-		"clusterSet2":  {"cluster21": {}, "cluster22": {}, "cluster23": {}},
-		"clusterSet12": {"cluster11": {}, "cluster12": {}, "cluster13": {}, "cluster21": {}, "cluster22": {}, "cluster23": {}},
+	inputs := map[string]sets.Set[string]{
+		"clusterSet1":  sets.New[string]("cluster11", "cluster12", "cluster13"),
+		"clusterSet2":  sets.New[string]("cluster21", "cluster22", "cluster23"),
+		"clusterSet12": sets.New[string]("cluster11", "cluster12", "cluster13", "cluster21", "cluster22", "cluster23"),
 	}
 
 	for clusterSet, clusters := range inputs {
@@ -30,15 +30,15 @@ func TestClusterSetMapper(t *testing.T) {
 	}
 
 	// TestCase: update existed clusterSets
-	updateInputs := map[string]sets.String{
-		"clusterSet3": {"cluster11": {}, "cluster12": {}, "cluster13": {}},
-		"clusterSet2": {"cluster11": {}, "cluster22": {}},
+	updateInputs := map[string]sets.Set[string]{
+		"clusterSet3": sets.New[string]("cluster11", "cluster12", "cluster13"),
+		"clusterSet2": sets.New[string]("cluster11", "cluster22"),
 	}
-	expectedAllClusterSetToClusters := map[string]sets.String{
-		"clusterSet1":  {"cluster11": {}, "cluster12": {}, "cluster13": {}},
-		"clusterSet12": {"cluster11": {}, "cluster12": {}, "cluster13": {}, "cluster21": {}, "cluster22": {}, "cluster23": {}},
-		"clusterSet3":  {"cluster11": {}, "cluster12": {}, "cluster13": {}},
-		"clusterSet2":  {"cluster11": {}, "cluster22": {}},
+	expectedAllClusterSetToClusters := map[string]sets.Set[string]{
+		"clusterSet1":  sets.New[string]("cluster11", "cluster12", "cluster13"),
+		"clusterSet12": sets.New[string]("cluster11", "cluster12", "cluster13", "cluster21", "cluster22", "cluster23"),
+		"clusterSet3":  sets.New[string]("cluster11", "cluster12", "cluster13"),
+		"clusterSet2":  sets.New[string]("cluster11", "cluster22"),
 	}
 
 	for clusterSet, clusters := range updateInputs {
@@ -54,10 +54,10 @@ func TestClusterSetMapper(t *testing.T) {
 
 	// TestCase: Delete clusterSets
 	deleteClusterSet := "clusterSet12"
-	expectedAllClusterSetToClusters = map[string]sets.String{
-		"clusterSet1": {"cluster11": {}, "cluster12": {}, "cluster13": {}},
-		"clusterSet2": {"cluster11": {}, "cluster22": {}},
-		"clusterSet3": {"cluster11": {}, "cluster12": {}, "cluster13": {}},
+	expectedAllClusterSetToClusters = map[string]sets.Set[string]{
+		"clusterSet1": sets.New[string]("cluster11", "cluster12", "cluster13"),
+		"clusterSet2": sets.New[string]("cluster11", "cluster22"),
+		"clusterSet3": sets.New[string]("cluster11", "cluster12", "cluster13"),
 	}
 
 	clusterSetMapper.DeleteClusterSet(deleteClusterSet)
@@ -74,7 +74,7 @@ func TestClusterSetMapper(t *testing.T) {
 
 }
 
-func initClustersetmap(m map[string]sets.String) *ClusterSetMapper {
+func initClustersetmap(m map[string]sets.Set[string]) *ClusterSetMapper {
 	var clusterSetMapper = NewClusterSetMapper()
 	for clusterset, cluster := range m {
 		clusterSetMapper.UpdateClusterSetByObjects(clusterset, cluster)
@@ -84,12 +84,12 @@ func initClustersetmap(m map[string]sets.String) *ClusterSetMapper {
 
 func TestClusterSetMapper_AddObjectInClusterSet(t *testing.T) {
 	// Delete cluster in clusterset
-	initMap := map[string]sets.String{
-		"clusterSet1": {"cluster12": {}},
+	initMap := map[string]sets.Set[string]{
+		"clusterSet1": sets.New[string]("cluster12"),
 	}
 	clusterSetMapper := initClustersetmap(initMap)
-	expectClustermap := map[string]sets.String{
-		"clusterSet1": {"cluster12": {}, "cluster13": {}},
+	expectClustermap := map[string]sets.Set[string]{
+		"clusterSet1": sets.New[string]("cluster12", "cluster13"),
 	}
 	clusterSetMapper.AddObjectInClusterSet("cluster13", "clusterSet1")
 	clusterSetName := clusterSetMapper.GetObjectClusterset("cluster13")
@@ -98,15 +98,15 @@ func TestClusterSetMapper_AddObjectInClusterSet(t *testing.T) {
 
 func TestClusterSetMapper_DeleteObjectInClusterSet(t *testing.T) {
 	// Delete cluster in clusterset
-	initMap := map[string]sets.String{
-		"clusterSet4": {"cluster11": {}},
-		"clusterSet1": {"cluster12": {}, "cluster13": {}},
-		"clusterSet3": {"cluster12": {}, "cluster22": {}},
+	initMap := map[string]sets.Set[string]{
+		"clusterSet4": sets.New[string]("cluster11"),
+		"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+		"clusterSet3": sets.New[string]("cluster12", "cluster22"),
 	}
 	clusterSetMapper := initClustersetmap(initMap)
-	expectClustermap := map[string]sets.String{
-		"clusterSet1": {"cluster12": {}, "cluster13": {}},
-		"clusterSet3": {"cluster12": {}},
+	expectClustermap := map[string]sets.Set[string]{
+		"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+		"clusterSet3": sets.New[string]("cluster12"),
 	}
 	clusterSetMapper.DeleteObjectInClusterSet("cluster11")
 	clusterSetMapper.DeleteObjectInClusterSet("cluster22")
@@ -114,16 +114,16 @@ func TestClusterSetMapper_DeleteObjectInClusterSet(t *testing.T) {
 }
 
 func TestClusterSetMapper_UpdateObjectInClusterSet(t *testing.T) {
-	initMap := map[string]sets.String{
-		"clusterSet2": {"cluster11": {}},
-		"clusterSet1": {"cluster12": {}, "cluster13": {}},
-		"clusterSet3": {"cluster12": {}, "cluster22": {}},
+	initMap := map[string]sets.Set[string]{
+		"clusterSet2": sets.New[string]("cluster11"),
+		"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+		"clusterSet3": sets.New[string]("cluster12", "cluster22"),
 	}
 	clusterSetMapper := initClustersetmap(initMap)
-	expectClustermap := map[string]sets.String{
-		"clusterSet1": {"cluster12": {}, "cluster13": {}},
-		"clusterSet3": {"cluster12": {}, "cluster11": {}},
-		"clusterSet4": {"cluster22": {}},
+	expectClustermap := map[string]sets.Set[string]{
+		"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+		"clusterSet3": sets.New[string]("cluster12", "cluster11"),
+		"clusterSet4": sets.New[string]("cluster22"),
 	}
 	clusterSetMapper.UpdateObjectInClusterSet("cluster11", "clusterSet3")
 	clusterSetMapper.UpdateObjectInClusterSet("cluster22", "clusterSet4")
@@ -140,51 +140,51 @@ func TestClusterSetMapper_UnionObjectsInClusterSet(t *testing.T) {
 	}{
 		{
 			name: "seperate mapper",
-			curClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet1": {"cluster12": {}, "cluster13": {}},
-				"clusterSet2": {"cluster21": {}, "cluster22": {}},
+			curClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+				"clusterSet2": sets.New[string]("cluster21", "cluster22"),
 			}),
-			newClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet3": {"cluster31": {}},
-				"clusterSet4": {"cluster41": {}, "cluster42": {}},
+			newClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet3": sets.New[string]("cluster31"),
+				"clusterSet4": sets.New[string]("cluster41", "cluster42"),
 			}),
-			expectClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet1": {"cluster12": {}, "cluster13": {}},
-				"clusterSet2": {"cluster21": {}, "cluster22": {}},
-				"clusterSet3": {"cluster31": {}},
-				"clusterSet4": {"cluster41": {}, "cluster42": {}},
+			expectClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+				"clusterSet2": sets.New[string]("cluster21", "cluster22"),
+				"clusterSet3": sets.New[string]("cluster31"),
+				"clusterSet4": sets.New[string]("cluster41", "cluster42"),
 			}),
 		},
 		{
 			name: "key equal mapper",
-			curClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet1": {"cluster12": {}, "cluster13": {}},
-				"clusterSet2": {"cluster21": {}, "cluster22": {}},
+			curClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+				"clusterSet2": sets.New[string]("cluster21", "cluster22"),
 			}),
-			newClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet2": {"cluster31": {}},
-				"clusterSet4": {"cluster41": {}, "cluster42": {}},
+			newClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet2": sets.New[string]("cluster31"),
+				"clusterSet4": sets.New[string]("cluster41", "cluster42"),
 			}),
-			expectClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet1": {"cluster12": {}, "cluster13": {}},
-				"clusterSet2": {"cluster21": {}, "cluster22": {}, "cluster31": {}},
-				"clusterSet4": {"cluster41": {}, "cluster42": {}},
+			expectClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+				"clusterSet2": sets.New[string]("cluster21", "cluster22", "cluster31"),
+				"clusterSet4": sets.New[string]("cluster41", "cluster42"),
 			}),
 		},
 		{
 			name: "key and value equal mapper",
-			curClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet1": {"cluster12": {}, "cluster13": {}},
-				"clusterSet2": {"cluster21": {}, "cluster22": {}},
+			curClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+				"clusterSet2": sets.New[string]("cluster21", "cluster22"),
 			}),
-			newClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet2": {"cluster21": {}, "cluster22": {}},
-				"clusterSet4": {"cluster41": {}, "cluster42": {}},
+			newClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet2": sets.New[string]("cluster21", "cluster22"),
+				"clusterSet4": sets.New[string]("cluster41", "cluster42"),
 			}),
-			expectClusterSetMapper: initClustersetmap(map[string]sets.String{
-				"clusterSet1": {"cluster12": {}, "cluster13": {}},
-				"clusterSet2": {"cluster21": {}, "cluster22": {}},
-				"clusterSet4": {"cluster41": {}, "cluster42": {}},
+			expectClusterSetMapper: initClustersetmap(map[string]sets.Set[string]{
+				"clusterSet1": sets.New[string]("cluster12", "cluster13"),
+				"clusterSet2": sets.New[string]("cluster21", "cluster22"),
+				"clusterSet4": sets.New[string]("cluster41", "cluster42"),
 			}),
 		},
 	}
@@ -198,17 +198,17 @@ func TestClusterSetMapper_UnionObjectsInClusterSet(t *testing.T) {
 }
 
 func TestClusterSetMapper_CopyClusterSetMapper(t *testing.T) {
-	initMap := map[string]sets.String{
-		"clusterSet1": {"cluster12": {}, "cluster13": {}},
+	initMap := map[string]sets.Set[string]{
+		"clusterSet1": sets.New[string]("cluster12", "cluster13"),
 	}
-	copyInitMap := map[string]sets.String{
-		"clusterSet2": {"cluster21": {}, "cluster22": {}, "cluster23": {}},
+	copyInitMap := map[string]sets.Set[string]{
+		"clusterSet2": sets.New[string]("cluster21", "cluster22", "cluster23"),
 	}
 	clusterSetMapper := initClustersetmap(initMap)
 	copyClusterSetMapper := initClustersetmap(copyInitMap)
 
-	expectClustermap := map[string]sets.String{
-		"clusterSet2": {"cluster21": {}, "cluster22": {}, "cluster23": {}},
+	expectClustermap := map[string]sets.Set[string]{
+		"clusterSet2": sets.New[string]("cluster21", "cluster22", "cluster23"),
 	}
 	clusterSetMapper.CopyClusterSetMapper(copyClusterSetMapper)
 	assert.Equal(t, 0, len(clusterSetMapper.clusterSetToObjects["clusterSet1"]))

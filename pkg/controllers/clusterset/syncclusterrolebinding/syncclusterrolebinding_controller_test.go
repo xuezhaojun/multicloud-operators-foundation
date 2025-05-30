@@ -24,9 +24,7 @@ var (
 func generateClustersetToClusters(ms map[string]sets.Set[string]) *helpers.ClusterSetMapper {
 	clustersetToClusters := helpers.NewClusterSetMapper()
 	for s, c := range ms {
-		// Convert new generic set to legacy sets.String for compatibility
-		legacySet := sets.NewString(c.UnsortedList()...)
-		clustersetToClusters.UpdateClusterSetByObjects(s, legacySet)
+		clustersetToClusters.UpdateClusterSetByObjects(s, c)
 	}
 	return clustersetToClusters
 }

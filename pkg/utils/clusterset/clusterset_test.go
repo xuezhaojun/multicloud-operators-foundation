@@ -1,9 +1,10 @@
 package utils
 
 import (
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"reflect"
 	"testing"
+
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 
 	"github.com/stolostron/multicloud-operators-foundation/pkg/helpers"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -110,7 +111,7 @@ func Test_GenerateObjectSubjectMap(t *testing.T) {
 func generateClustersetToObjects(ms map[string]sets.String) *helpers.ClusterSetMapper {
 	clustersetToClusters := helpers.NewClusterSetMapper()
 	for s, c := range ms {
-		clustersetToClusters.UpdateClusterSetByObjects(s, c)
+		clustersetToClusters.UpdateClusterSetByObjectsLegacy(s, c)
 	}
 	return clustersetToClusters
 }

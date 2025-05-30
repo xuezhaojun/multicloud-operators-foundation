@@ -50,7 +50,7 @@ const (
 func generateClustersetToClusters(ms map[string]sets.String) *helpers.ClusterSetMapper {
 	clustersetToClusters := helpers.NewClusterSetMapper()
 	for s, c := range ms {
-		clustersetToClusters.UpdateClusterSetByObjects(s, c)
+		clustersetToClusters.UpdateClusterSetByObjectsLegacy(s, c)
 	}
 	return clustersetToClusters
 }
